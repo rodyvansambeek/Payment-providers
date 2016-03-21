@@ -39,6 +39,9 @@
       <HintPath>..\Lib\Klarna\Klarna.Checkout.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mollie.iDEAL">
+      <HintPath>..\Lib\Mollie\Mollie.iDEAL.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Lib\Tea Commerce\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -70,6 +73,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Classic\Axcess.cs" />
+    <Compile Include="Classic\MollieIdeal.cs" />
     <Compile Include="Classic\QuickPay10.cs" />
     <Compile Include="Classic\Paynova.cs" />
     <Compile Include="Inline\Klarna.cs" />
@@ -289,7 +293,6 @@
   <ItemGroup>
     <None Include="Web References\AuthorizeNetService\Service.disco" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
