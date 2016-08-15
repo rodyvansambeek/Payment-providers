@@ -73,6 +73,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Classic\Axcess.cs" />
+    <Compile Include="Classic\Buckaroo.cs" />
     <Compile Include="Classic\MollieIdeal.cs" />
     <Compile Include="Classic\QuickPay10.cs" />
     <Compile Include="Classic\Paynova.cs" />
