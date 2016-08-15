@@ -169,7 +169,7 @@ namespace TeaCommerce.PaymentProviders.Classic
                 htmlForm.InputFields["brq_service_paymentguarantee_CustomerFirstName"] = order.PaymentInformation.FirstName;
                 htmlForm.InputFields["brq_service_paymentguarantee_CustomerBirthDate"] = order.Properties[settings["birthdateAlias"]];
                 htmlForm.InputFields["brq_service_paymentguarantee_CustomerLastName"] = order.PaymentInformation.LastName;
-                htmlForm.InputFields["brq_service_paymentguarantee_AmountVat"] = order.TotalPrice.Vat.ToString("0.00", CultureInfo.InvariantCulture);
+                htmlForm.InputFields["brq_service_paymentguarantee_AmountVat"] = order.TotalPrice.Value.Vat.ToString("0.00", CultureInfo.InvariantCulture);
                 htmlForm.InputFields["brq_service_paymentguarantee_CustomerInitials"] = order.PaymentInformation.FirstName.Substring(0, 1);
                 htmlForm.InputFields["brq_service_paymentguarantee_DateDue"] = string.Format("{0:yyyy-MM-dd}", DateTime.Now.AddDays(14));
                 htmlForm.InputFields["brq_service_paymentguarantee_CustomerIban"] = order.Properties[settings["ibanAlias"]];
