@@ -74,7 +74,6 @@
     </Compile>
     <Compile Include="Classic\Axcess.cs" />
     <Compile Include="Classic\Buckaroo.cs" />
-    <Compile Include="Classic\AutoIncasso.cs" />
     <Compile Include="Classic\MollieIdeal.cs" />
     <Compile Include="Classic\Invoicing.cs" />
     <Compile Include="Classic\QuickPay10.cs" />
