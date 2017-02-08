@@ -83,7 +83,7 @@ namespace TeaCommerce.PaymentProviders.Classic
             }
             catch (Exception ex)
             {
-                LoggingService.Instance.Log(ex, "GenerateHtmlForm exception");
+                LoggingService.Instance.Error<MollieiDeal>("GenerateHtmlForm exception", ex);
                 throw ex;
             }
         }
@@ -134,11 +134,11 @@ namespace TeaCommerce.PaymentProviders.Classic
                 {
                     throw new SecurityException(String.Format("Received invalid hash, received hash: {0}, expected hash: {1}", receivedHash, calculatedHash));
                 }
-                LoggingService.Instance.Log(string.Format("Found cartNumber: {0} for transaction_id {1}", cartNumber, transaction_id));
+                LoggingService.Instance.Info<MollieiDeal>(string.Format("Found cartNumber: {0} for transaction_id {1}", cartNumber, transaction_id));
             }
             catch (Exception exp)
             {
-                LoggingService.Instance.Log(exp, "GetCartNumber exception");
+                LoggingService.Instance.Error<MollieiDeal>("GetCartNumber exception", exp);
             }
             return cartNumber;
         }
@@ -174,22 +174,22 @@ namespace TeaCommerce.PaymentProviders.Classic
                     if (Math.Round(mollieAmount, 0) == Math.Round(orderAmount, Convert.ToInt32(settings["RoundingMode"])))
                     {
                         callbackInfo = new CallbackInfo(orderAmount, request["transaction_id"], PaymentState.Captured);
-                        LoggingService.Instance.Log(string.Format("Mollie: Saved and finalized orderId {0}", order.Id));
+                        LoggingService.Instance.Info<MollieiDeal>(string.Format("Mollie: Saved and finalized orderId {0}", order.Id));
                     }
                     else
                     {
                         callbackInfo = new CallbackInfo(orderAmount, request["transaction_id"], PaymentState.Error);
-                        LoggingService.Instance.Log(string.Format("Mollie: Controle: MollieAmount:{0} OrderAmount: {1} do not match!", mollieAmount, orderAmount));
+                        LoggingService.Instance.Info<MollieiDeal>(string.Format("Mollie: Controle: MollieAmount:{0} OrderAmount: {1} do not match!", mollieAmount, orderAmount));
                     }
                 }
                 else
                 {
-                    LoggingService.Instance.Log(string.Format("Mollie: Controle: iDeal status not payed, for cartId {0}!", order.Id));
+                    LoggingService.Instance.Info<MollieiDeal>(string.Format("Mollie: Controle: iDeal status not payed, for cartId {0}!", order.Id));
                 }
             }
             catch (Exception exp)
             {
-                LoggingService.Instance.Log(exp, "ProcessCallback exception");
+                LoggingService.Instance.Error<MollieiDeal>("ProcessCallback exception", exp);
             }
 
             return callbackInfo;

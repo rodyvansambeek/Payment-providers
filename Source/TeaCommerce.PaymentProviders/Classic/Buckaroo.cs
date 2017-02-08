@@ -298,26 +298,26 @@ namespace TeaCommerce.PaymentProviders.Classic
                             else
                             {
                                 //callbackInfo = new CallbackInfo(orderAmount, request["transaction_id"], PaymentState.Error, brq_transaction_method, brq_payment);
-                                LoggingService.Instance.Log(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals), orderAmount, Math.Round(orderAmount, NumberOfDecimals)));
+                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals), orderAmount, Math.Round(orderAmount, NumberOfDecimals)));
                             }
                             break;
                         case "490": //Failure: the request failed.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "491"://Validation Failure: The request contains errors.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "492"://Technical Error: The request failed due to a technical error.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "690": //Payment rejected. 
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "790"://Pending input: the request has been received, possibly the gateway is waiting for the customer to enter his details.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "791"://Pending Processing: the Payment Engine is processing the transaction.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "792"://Awaiting consumer action (eg. bank transfer)
                             if (settings["awaiting_transfer_update"] == "1")
@@ -325,30 +325,30 @@ namespace TeaCommerce.PaymentProviders.Classic
                                 order.OrderStatusId = awaiting_transfer_statusid;
                                 order.Save();
                             }
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment awaiting consumer action, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment awaiting consumer action, code: " + brq_statuscode));
                             break;
                         case "793"://Pending Processing: Waiting for sufficient balance.
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "890": //Cancelled by consumer
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         case "891": //Cancelled by merchant
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                         default:
-                            LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
                             break;
                     }
                 }
                 else
                 {
-                    LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Signature not valid"));
+                    LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Signature not valid"));
                 }
             }
             catch (Exception exp)
             {
-                LoggingService.Instance.Log(exp, String.Concat("Buckaroo-Payments (", order.CartNumber, ")"));
+                LoggingService.Instance.Error<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ")"), exp);
             }
             return callbackInfo;
         }
@@ -390,12 +390,12 @@ namespace TeaCommerce.PaymentProviders.Classic
                     apiInfo = new ApiInfo(response["BRQ_TRANSACTIONS"], PaymentState.Refunded);
                 }
 
-                LoggingService.Instance.Log(String.Concat("Buckaroo-Payments (", order.OrderNumber, ") - Refunded Order from back-end"));
+                LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.OrderNumber, ") - Refunded Order from back-end"));
                 return apiInfo;
             }
             catch (Exception exp)
             {
-                LoggingService.Instance.Log(exp, String.Concat("Buckaroo-Payments (", order.OrderNumber, ")"));
+                LoggingService.Instance.Error<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.OrderNumber, ")"), exp);
             }
             return apiInfo;
         }
@@ -437,7 +437,7 @@ namespace TeaCommerce.PaymentProviders.Classic
             }
             catch (Exception exp)
             {
-                LoggingService.Instance.Log(exp, String.Concat("Buckaroo-Payments (", order.OrderNumber, ")"));
+                LoggingService.Instance.Error<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.OrderNumber, ")"), exp);
             }
 
             return apiInfo;
@@ -557,14 +557,14 @@ namespace TeaCommerce.PaymentProviders.Classic
                     }
                     else
                     {
-                        LoggingService.Instance.Log("Buckaroo-Payments MakeNVPGatewayRequest: Invalid Signature");
+                        LoggingService.Instance.Info<BuckarooPayments>("Buckaroo-Payments MakeNVPGatewayRequest: Invalid Signature");
                     }
                 }
 
             }
             catch (Exception e)
             {
-                LoggingService.Instance.Log(e, String.Concat("Buckaroo-Payments MakeNVPGatewayRequest response: ", response));
+                LoggingService.Instance.Error<BuckarooPayments>(String.Concat("Buckaroo-Payments MakeNVPGatewayRequest response: ", response), e);
             }
 
             return response;
