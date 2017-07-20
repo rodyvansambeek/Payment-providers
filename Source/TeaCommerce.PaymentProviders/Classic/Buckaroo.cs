@@ -291,14 +291,14 @@ namespace TeaCommerce.PaymentProviders.Classic
 
                             //callbackInfo = new CallbackInfo(decimal.Parse(brq_amount, CultureInfo.InvariantCulture), brq_transactions, PaymentState.Captured, brq_transaction_method, brq_payment);
                             var buckarooAmount = decimal.Parse(brq_amount, CultureInfo.InvariantCulture);
-                            if (Math.Round(buckarooAmount, NumberOfDecimals) == Math.Round(orderAmount, NumberOfDecimals))
+                            if (Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero) == Math.Round(orderAmount, NumberOfDecimals, MidpointRounding.AwayFromZero))
                             {
                                 callbackInfo = new CallbackInfo(orderAmount, brq_transactions, PaymentState.Captured, brq_transaction_method, brq_payment);
                             }
                             else
                             {
                                 //callbackInfo = new CallbackInfo(orderAmount, request["transaction_id"], PaymentState.Error, brq_transaction_method, brq_payment);
-                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals), orderAmount, Math.Round(orderAmount, NumberOfDecimals)));
+                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero), orderAmount, Math.Round(orderAmount, NumberOfDecimals, MidpointRounding.AwayFromZero)));
                             }
                             break;
                         case "490": //Failure: the request failed.
