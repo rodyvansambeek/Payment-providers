@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,7 @@ using TeaCommerce.Api.Models;
 using TeaCommerce.Api.Services;
 using TeaCommerce.Api.Web.PaymentProviders;
 using TeaCommerce.Api.Infrastructure.Logging;
+using TeaCommerce.PaymentProviders.Notifications;
 
 namespace TeaCommerce.PaymentProviders.Classic
 {
@@ -271,6 +273,8 @@ namespace TeaCommerce.PaymentProviders.Classic
                 string brq_transactions = request.Form["brq_transactions"];
                 string brq_transaction_method = request.Form["brq_transaction_method"];
                 string brq_signature = request.Form["brq_signature"];
+                string brq_statuscode_detail = request.Form["brq_statuscode_detail"];
+                string brq_statusmessage = request.Form["brq_statusmessage"];
                 long awaiting_transfer_statusid = 1;
 
                 long.TryParse(settings["awaiting_transfer_statusid"], out awaiting_transfer_statusid);
@@ -283,7 +287,7 @@ namespace TeaCommerce.PaymentProviders.Classic
 
                 if (GenerateBuckarooSignature(inputFields, settings).Equals(brq_signature))
                 {
-                    decimal orderAmount = order.TotalPrice.Value.WithVat;
+                    decimal orderAmount = Math.Round(order.TotalPrice.Value.WithVat, NumberOfDecimals, MidpointRounding.AwayFromZero);
 
                     switch (brq_statuscode)
                     {
@@ -291,33 +295,45 @@ namespace TeaCommerce.PaymentProviders.Classic
 
                             //callbackInfo = new CallbackInfo(decimal.Parse(brq_amount, CultureInfo.InvariantCulture), brq_transactions, PaymentState.Captured, brq_transaction_method, brq_payment);
                             var buckarooAmount = decimal.Parse(brq_amount, CultureInfo.InvariantCulture);
-                            if (Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero) == Math.Round(orderAmount, NumberOfDecimals, MidpointRounding.AwayFromZero))
+                            if (Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero) == orderAmount)
                             {
                                 callbackInfo = new CallbackInfo(orderAmount, brq_transactions, PaymentState.Captured, brq_transaction_method, brq_payment);
+                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3})", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero), orderAmount, orderAmount));
                             }
                             else
                             {
+                                callbackInfo = new CallbackInfo(orderAmount, brq_transactions, PaymentState.Captured, brq_transaction_method, brq_payment);
+                                // Added noticationmanager to catch order amounts that don't match.
+                                NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"],
+                                    $"Buckaroo-Payments (cart: {order.CartNumber}): Controle: Buckaroo-Payments:{buckarooAmount} ({Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero)}) " +
+                                    $"OrderAmount: {orderAmount} ({orderAmount}) do not match!"
+                                );
                                 //callbackInfo = new CallbackInfo(orderAmount, request["transaction_id"], PaymentState.Error, brq_transaction_method, brq_payment);
-                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero), orderAmount, Math.Round(orderAmount, NumberOfDecimals, MidpointRounding.AwayFromZero)));
+                                LoggingService.Instance.Info<BuckarooPayments>(string.Format("Buckaroo-Payments: Controle: Buckaroo-Payments:{0} ({1}) OrderAmount: {2} ({3}) do not match!", buckarooAmount, Math.Round(buckarooAmount, NumberOfDecimals, MidpointRounding.AwayFromZero), orderAmount, orderAmount));
                             }
                             break;
                         case "490": //Failure: the request failed.
-                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));                            
                             break;
                         case "491"://Validation Failure: The request contains errors.
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "492"://Technical Error: The request failed due to a technical error.
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "690": //Payment rejected. 
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "790"://Pending input: the request has been received, possibly the gateway is waiting for the customer to enter his details.
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "791"://Pending Processing: the Payment Engine is processing the transaction.
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "792"://Awaiting consumer action (eg. bank transfer)
                             if (settings["awaiting_transfer_update"] == "1")
@@ -329,15 +345,16 @@ namespace TeaCommerce.PaymentProviders.Classic
                             break;
                         case "793"://Pending Processing: Waiting for sufficient balance.
                             LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Payment failed code: {brq_statuscode} - StatusMessage: {brq_statusmessage}");
                             break;
                         case "890": //Cancelled by consumer
-                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));                            
                             break;
                         case "891": //Cancelled by merchant
-                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));                            
                             break;
                         default:
-                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));
+                            LoggingService.Instance.Info<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ") - Payment failed, code: " + brq_statuscode));                            
                             break;
                     }
                 }
@@ -349,6 +366,7 @@ namespace TeaCommerce.PaymentProviders.Classic
             catch (Exception exp)
             {
                 LoggingService.Instance.Error<BuckarooPayments>(String.Concat("Buckaroo-Payments (", order.CartNumber, ")"), exp);
+                NotificationManager.MailError(ConfigurationManager.AppSettings["NotificationOnErrors"], $"Buckaroo-Payments cart: {order.CartNumber} - Exception message: {exp.Message}");
             }
             return callbackInfo;
         }
