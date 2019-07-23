@@ -156,6 +156,12 @@ namespace TeaCommerce.PaymentProviders.Classic
             htmlForm.InputFields["brq_platform_name"] = "Umbraco CMS";
             htmlForm.InputFields["brq_platform_version"] = "6";
 
+            if (settings["brq_payment_method"].Equals("ideal", StringComparison.InvariantCultureIgnoreCase))
+            {
+                string idealIssuer = order.Properties["ideal_issuer"];
+                htmlForm.InputFields["brq_service_ideal_issuer"] = idealIssuer;
+            }
+
             if (settings["brq_requestedservices"].Contains("paymentguarantee"))
             {
                 // Information for AfterPay
@@ -524,7 +530,9 @@ namespace TeaCommerce.PaymentProviders.Classic
             settings.MustNotBeNull("settings");
             settings.MustContainKey("secret_key", "settings");
 
-            string strToHash = string.Join("", inputFields.OrderBy(i => i.Key, StringComparer.CurrentCultureIgnoreCase).Select(i => i.Key + "=" + i.Value));
+            var fieldsForSignature = inputFields.Where(i => i.Key.StartsWith("brq") || i.Key.StartsWith("add") || i.Key.StartsWith("cust"));
+
+            string strToHash = string.Join("", fieldsForSignature.OrderBy(i => i.Key, StringComparer.CurrentCultureIgnoreCase).Select(i => i.Key + "=" + i.Value));
             //string digest = this.GenerateSHA1Hash(String.Concat(strToHash, ssettings["secret_key"]));
             string digest = new SHA1Managed().ComputeHash(Encoding.UTF8.GetBytes(String.Concat(strToHash, settings["secret_key"]))).ToHex();
 
