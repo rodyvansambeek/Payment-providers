@@ -530,7 +530,7 @@ namespace TeaCommerce.PaymentProviders.Classic
             settings.MustNotBeNull("settings");
             settings.MustContainKey("secret_key", "settings");
 
-            var fieldsForSignature = inputFields.Where(i => i.Key.StartsWith("brq") || i.Key.StartsWith("add") || i.Key.StartsWith("cust"));
+            var fieldsForSignature = inputFields.Where(i => i.Key.StartsWith("brq", StringComparison.InvariantCultureIgnoreCase) || i.Key.StartsWith("add", StringComparison.InvariantCultureIgnoreCase) || i.Key.StartsWith("cust", StringComparison.InvariantCultureIgnoreCase));
 
             string strToHash = string.Join("", fieldsForSignature.OrderBy(i => i.Key, StringComparer.CurrentCultureIgnoreCase).Select(i => i.Key + "=" + i.Value));
             //string digest = this.GenerateSHA1Hash(String.Concat(strToHash, ssettings["secret_key"]));
